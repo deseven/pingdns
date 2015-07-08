@@ -1033,7 +1033,7 @@ minTime=-1
 averageTime=-1
 maxTime=-1
 
-trap 'echo && echo "--- $1 pingdns statistics ---" && echo "$countRun queries transmitted, $countSuccess queries answered, $countFail queries failed" && echo "round-trip min/avg/max = $minTime/$averageTime/$maxTime ms" && exit 0' INT
+trap 'echo && echo "--- $1 pingdns statistics ---" && echo "$countRun queries transmitted, $countSuccess queries answered, $countFail queries failed" && echo "round-trip min/avg/max = $minTime/$averageTime/$maxTime ms" && exit 0' INT TERM
 
 echo "PINGDNS $1:"
 

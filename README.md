@@ -1,5 +1,5 @@
 ## pingdns
-![pingdns](http://deseven.info/sys/pingdns.gif) 
+![pingdns](http://deseven.info/sys/pingdns.gif)  
 A simple tool to "ping" (send a query and get an answer) the dns server.  
 It's written to mimic the standard ping utility so it is really easy to understand the output.
 
