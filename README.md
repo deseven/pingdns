@@ -1,4 +1,5 @@
 ## pingdns
+![pingdns](http://deseven.info/sys/pingdns.gif) 
 A simple tool to "ping" (send a query and get an answer) the dns server.  
 It's written to mimic the standard ping utility so it is really easy to understand the output.
 
@@ -11,10 +12,12 @@ dig
 tested on CentOS 6 and OS X 10.10
 
 ## installation
-Download the pingdns file, set the execution bit anb make a symlink from /usr/bin/pingdns  
+Download the pingdns file, set the execution bit and make a symlink from /usr/bin/pingdns  
 like that:  
 ```sh
-curl https://raw.githubusercontent.com/deseven/pingdns/master/pingdns --output /opt/pingdns && chmod +x /opt/pingdns && ln -s /opt/pingdns /usr/bin/pingdns
+curl https://raw.githubusercontent.com/deseven/pingdns/master/pingdns --output /opt/pingdns  
+chmod +x /opt/pingdns  
+ln -s /opt/pingdns /usr/bin/pingdns
 ```
 
 ## usage
