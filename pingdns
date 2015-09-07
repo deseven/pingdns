@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-rev=3
+rev=4
 
 # default settings
 count=0
@@ -1034,21 +1034,21 @@ pingDNS() {
 			ir=1
 		fi
 		if [ "$ir" != "1" ]; then
-			countRun=`expr $countRun + 1`
+			countRun=$(expr $countRun + 1)
 			if [ -z $query ] || [ "$query" == "0" ]; then
-				query=`echo "$pingdns_hosts" | grep "^$((RANDOM%1000))," | cut -f2 -d","`
+				query=$(echo "$pingdns_hosts" | grep "^$((RANDOM%1000))," | cut -f2 -d",")
 			fi
-			res=`dig +time=$timeout +tries=1 +noall +stats $query @$dns 2>&1`
+			res=$(dig +time=$timeout +tries=1 +noall +stats $query @$dns 2>&1)
 			code=$?
 			if [ "$code" == "0" ]; then
-				resTime=`echo "$res" | grep "Query time:" | cut -f4 -d" "`
+				resTime=$(echo "$res" | grep "Query time:" | cut -f4 -d" ")
 				if [ ! -z $resTime ]; then
-					countSuccess=`expr $countSuccess + 1`
+					countSuccess=$(expr $countSuccess + 1)
 					if [ "$averageTime" == "-1" ]; then
 						averageTime=$resTime
 					else
-						averageTime=`expr $averageTime + $resTime`
-						averageTime=`expr $averageTime / 2`
+						averageTime=$(expr $averageTime + $resTime)
+						averageTime=$(expr $averageTime / 2)
 					fi
 					if [ "$minTime" == "-1" ]; then
 						minTime=$resTime
@@ -1065,7 +1065,7 @@ pingDNS() {
 					fi
 				fi
 			else
-				countFail=`expr $countFail + 1`
+				countFail=$(expr $countFail + 1)
 				echo "Request timeout for seq $countRun"
 			fi
 			query=$2
@@ -1085,11 +1085,11 @@ usage() {
 	echo "check https://github.com/deseven/pingdns for updates or help"
 	echo
 	echo "syntax: $0 [-hctqs] dns"
-	echo "\t-h\t\tshow this help"
-	echo "\t-c count\tstop after sending 'count' requests"
-	echo "\t-t sec\t\tset timeout to 'sec' seconds"
-	echo "\t-s query\tforce sending the defined 'query'"
-	echo "\t-q\t\tbe quiet, print only results"
+	echo -e "\t-h\t\tshow this help"
+	echo -e "\t-c count\tstop after sending 'count' requests"
+	echo -e "\t-t sec\t\tset timeout to 'sec' seconds"
+	echo -e "\t-q query\tforce sending the defined 'query'"
+	echo -e "\t-s\t\tbe silent, print only results"
 }
 
 checkDep() {
@@ -1098,7 +1098,7 @@ checkDep() {
 	done
 }
 
-checkDep grep dig cut expr getopts sleep kill
+checkDep grep dig cut expr getopts sleep kill trap
 
 while getopts "hc:t:q:s" opt; do
 	case $opt in
@@ -1141,7 +1141,7 @@ pingDNS $1 $query $count $timeout $silent &
 pingdns_pid=$!
 
 while true; do
-	if `kill -0 $pingdns_pid > /dev/null 2>&1`; then
+	if $(kill -0 $pingdns_pid > /dev/null 2>&1); then
 		sleep 1
 	else
 		export pingdns_hosts=""

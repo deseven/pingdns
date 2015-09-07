@@ -4,12 +4,12 @@ A simple tool to "ping" (send a query and get an answer) the dns server.
 It's written to mimic the standard ping utility so it is really easy to understand the output.
 
 ## dependencies
-sh  
+bash  
 grep  
 dig
 
 ## compatibility
-tested on CentOS 6 and OS X 10.10
+tested on CentOS 6/7, Debian 7 and OS X 10.10
 
 ## installation
 Download the pingdns file, set the execution bit and make a symlink from /usr/bin/pingdns  
