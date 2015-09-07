@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rev=5
+rev=6
 
 # default settings
 count=0
@@ -8,6 +8,7 @@ timeout=3
 query=0
 silent=0
 random=0
+flood=0
 
 # random hosts list, taken from alexa top1m
 export pingdns_hosts="1,google.com
@@ -1017,8 +1018,9 @@ pingDNS() {
 	query=$2
 	count=$3
 	timeout=$4
-	silent=$5
-	random=$6
+	random=$5
+	silent=$6
+	flood=$7
 	countRun=0
 	countFail=0
 	countSuccess=0
@@ -1074,6 +1076,9 @@ pingDNS() {
 				countFail=$(expr $countFail + 1)
 				echo "Request timeout for seq $countRun"
 			fi
+			if [ "$flood" != "1" ]; then
+				sleep 1
+			fi
 			query=$2
 		else
 			echo
@@ -1111,13 +1116,14 @@ usage() {
 	echo "written by deseven"
 	echo "check https://github.com/deseven/pingdns for updates or help"
 	echo
-	echo "syntax: $0 [-hctqsr] dns"
+	echo "syntax: $0 [-hctqrsf] dns"
 	echo -e "\t-h\t\tshow this help"
 	echo -e "\t-c count\tstop after sending 'count' requests"
 	echo -e "\t-t sec\t\tset timeout to 'sec' seconds"
 	echo -e "\t-q query\tforce sending the defined 'query'"
 	echo -e "\t-r\t\tgenerate random queries"
 	echo -e "\t-s\t\tbe silent, print only results"
+	echo -e "\t-f\t\tflood ping"
 }
 
 checkDep() {
@@ -1128,7 +1134,7 @@ checkDep() {
 
 checkDep grep dig cut expr getopts sleep kill trap
 
-while getopts "hc:t:q:sr" opt; do
+while getopts "hc:t:q:rsf" opt; do
 	case $opt in
 		h)
 			usage
@@ -1143,11 +1149,14 @@ while getopts "hc:t:q:sr" opt; do
 		q)
 			query=$OPTARG
 			;;
+		r)
+			random=1
+			;;
 		s)
 			silent=1
 			;;
-		r)
-			random=1
+		f)
+			flood=1
 			;;
 		\?)
 			echo "Invalid option: -$OPTARG" >&2
@@ -1168,7 +1177,7 @@ if [ -z $1 ]; then
 fi
 
 trap 'kill -s USR1 $pingdns_pid' INT TERM
-pingDNS $1 $query $count $timeout $silent $random &
+pingDNS $1 $query $count $timeout $random $silent $flood &
 pingdns_pid=$!
 
 while true; do

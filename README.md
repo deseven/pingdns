@@ -1,5 +1,5 @@
 ## pingdns
-![pingdns](http://deseven.info/sys/pingdns.gif)  
+![pingdns](http://deseven.info/sys/pingdns2.gif)  
 A simple tool to "ping" (send a query and get an answer) the dns server.  
 It's written to mimic the standard ping utility so it is really easy to understand the output.
 
@@ -29,5 +29,6 @@ ln -s /opt/pingdns /usr/bin/pingdns
 **-q query** to force sending the defined 'query'  
 **-r** to generate random queries  
 **-s** to be silent and print only results  
+**-f** to enable ping flood  
 By default (without **-r** or **-q** switch) the query will be populated from top 1000 sites.  
 *Also, don't forget that query (and answer) validity is not important, what is important is the fact that we got an answer and how fast that happened.*
