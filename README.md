@@ -21,7 +21,13 @@ ln -s /opt/pingdns /usr/bin/pingdns
 ```
 
 ## usage
-dyndns dns [host]  
-dns - dns server address (for example 4.2.2.2)  
-host - hostname to use as a query, if empty it will be populated randomly  
-Don't forget that query (and answer) validity is not important, what is important is the fact that we got an answer and how fast it happened.
+**pingdns [-hctqrs] dns**  
+**dns** - dns server address  
+**-h** to show the help  
+**-c count** to stop after sending 'count' requests  
+**-t sec** to set the query timeout to 'sec' seconds  
+**-q query** to force sending the defined 'query'  
+**-r** to generate random queries  
+**-s** to be silent and print only results  
+By default (without **-r** or **-q** switch) the query will be populated from top 1000 sites.  
+*Also, don't forget that query (and answer) validity is not important, what is important is the fact that we got an answer and how fast that happened.*
