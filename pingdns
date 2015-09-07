@@ -1,12 +1,15 @@
 #!/bin/sh
 
-# - pingdns rev.2
-# -
-# - written by deseven
-# - check https://github.com/deseven/pingdns for updates or help
+rev=3
+
+# default settings
+count=0
+timeout=3
+query=0
+silent=0
 
 # random hosts list, taken from alexa top1m
-hosts="1,google.com
+export pingdns_hosts="1,google.com
 2,facebook.com
 3,youtube.com
 4,baidu.com
@@ -1007,78 +1010,143 @@ hosts="1,google.com
 999,wattpad.com
 1000,nu.nl"
 
+# main function
+pingDNS() {
+	dns=$1
+	query=$2
+	count=$3
+	timeout=$4
+	silent=$5
+	countRun=0
+	countFail=0
+	countSuccess=0
+	minTime=-1
+	averageTime=-1
+	maxTime=-1
+	ir=0
+	trap "ir=1" USR1
+	trap '' INT
+	if [ "$silent" != "1" ]; then
+		echo "PINGDNS $dns:"
+	fi
+	while true; do
+		if [ "$count" != "0" ] && [ "$countRun" -ge "$count" ]; then
+			ir=1
+		fi
+		if [ "$ir" != "1" ]; then
+			countRun=`expr $countRun + 1`
+			if [ -z $query ] || [ "$query" == "0" ]; then
+				query=`echo "$pingdns_hosts" | grep "^$((RANDOM%1000))," | cut -f2 -d","`
+			fi
+			res=`dig +time=$timeout +tries=1 +noall +stats $query @$dns 2>&1`
+			code=$?
+			if [ "$code" == "0" ]; then
+				resTime=`echo "$res" | grep "Query time:" | cut -f4 -d" "`
+				if [ ! -z $resTime ]; then
+					countSuccess=`expr $countSuccess + 1`
+					if [ "$averageTime" == "-1" ]; then
+						averageTime=$resTime
+					else
+						averageTime=`expr $averageTime + $resTime`
+						averageTime=`expr $averageTime / 2`
+					fi
+					if [ "$minTime" == "-1" ]; then
+						minTime=$resTime
+					else
+						if [ "$minTime" -gt "$resTime" ]; then
+							minTime=$resTime
+						fi
+					fi
+					if [ "$maxTime" -lt "$resTime" ]; then
+						maxTime=$resTime
+					fi
+					if [ "$silent" != "1" ]; then
+						echo "answer from $1: seq=$countRun query=$query time=$resTime ms"
+					fi
+				fi
+			else
+				countFail=`expr $countFail + 1`
+				echo "Request timeout for seq $countRun"
+			fi
+			query=$2
+		else
+			echo
+			echo "--- $1 pingdns statistics ---"
+			echo "$countRun queries transmitted, $countSuccess queries answered, $countFail queries failed"
+			echo "round-trip min/avg/max = $minTime/$averageTime/$maxTime ms"
+			exit 0
+		fi
+	done
+}
+
+usage() {
+	echo "pingdns - a simple tool to \"ping\" dns servers, rev.$rev"
+	echo "written by deseven"
+	echo "check https://github.com/deseven/pingdns for updates or help"
+	echo
+	echo "syntax: $0 [-hctqs] dns"
+	echo "\t-h\t\tshow this help"
+	echo "\t-c count\tstop after sending 'count' requests"
+	echo "\t-t sec\t\tset timeout to 'sec' seconds"
+	echo "\t-s query\tforce sending the defined 'query'"
+	echo "\t-q\t\tbe quiet, print only results"
+}
+
 checkDep() {
 	for prog in "$@"; do
 		command -v $prog >/dev/null 2>&1 || { echo "$prog is required, please install it first" >&2; exit 1; }
 	done
 }
 
-checkDep grep dig cut expr
+checkDep grep dig cut expr getopts sleep kill
+
+while getopts "hc:t:q:s" opt; do
+	case $opt in
+		h)
+			usage
+			exit 0
+			;;
+		c)
+			count=$OPTARG
+			;;
+		t)
+			timeout=$OPTARG
+			;;
+		q)
+			query=$OPTARG
+			;;
+		s)
+			silent=1
+			;;
+		\?)
+			echo "Invalid option: -$OPTARG" >&2
+			exit 1
+			;;
+		:)
+			echo "Option -$OPTARG requires an argument." >&2
+			exit 1
+			;;
+	esac
+done
+
+shift $((OPTIND-1))
 
 if [ -z $1 ]; then
-	echo "syntax: $0 dns [host]"
+	usage
 	exit 1
 fi
 
-if [ -z $2 ]; then
-	query=""
-else
-	query="$2"
-fi
-
-countRun=0
-countSuccess=0
-countFail=0
-minTime=-1
-averageTime=-1
-maxTime=-1
-interrupt=0
-
-trap 'interrupt=1' INT TERM
-
-echo "PINGDNS $1:"
+trap 'kill -s USR1 $pingdns_pid' INT TERM
+pingDNS $1 $query $count $timeout $silent &
+pingdns_pid=$!
 
 while true; do
-	countRun=`expr $countRun + 1`
-	if [ -z $2 ]; then
-		query=`echo "$hosts" | grep "^$((RANDOM%1000))," | cut -f2 -d","`
-	fi
-	res=`dig +tries=1 +noall +stats $query @$1 2>&1`
-	code=$?
-	if [ "$interrupt" == "0" ]; then
-		if [ "$code" == "0" ]; then
-			countSuccess=`expr $countSuccess + 1`
-			resTime=`echo "$res" | grep "Query time:" | cut -f4 -d" "`
-			if [ "$averageTime" == "-1" ]; then
-				averageTime=$resTime
-			else
-				averageTime=`expr $averageTime + $resTime`
-				averageTime=`expr $averageTime / 2`
-			fi
-			if [ "$minTime" == "-1" ]; then
-				minTime=$resTime
-			else
-				if [ $minTime -gt $resTime ]; then
-					minTime=$resTime
-				fi
-			fi
-			if [ $maxTime -lt $resTime ]; then
-				maxTime=$resTime
-			fi
-			echo "answer from $1: seq=$countRun query=$query time=$resTime ms"
-		else
-			countFail=`expr $countFail + 1`
-			echo "Request timeout for seq $countRun"
-		fi
+	if `kill -0 $pingdns_pid > /dev/null 2>&1`; then
+		sleep 1
 	else
+		export pingdns_hosts=""
 		break
 	fi
 done
-
-echo
-
-echo "--- $1 pingdns statistics ---"
-echo "$countRun queries transmitted, $countSuccess queries answered, $countFail queries failed"
-echo "round-trip min/avg/max = $minTime/$averageTime/$maxTime ms"
 
 exit 0
